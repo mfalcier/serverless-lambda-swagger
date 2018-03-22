@@ -1,0 +1,84 @@
+service: swagger-lambda
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  runtime: java8
+  region: eu-west-1
+  memorySize: 1024
+  timeout: 300
+
+  environment:
+    environment: ${self:provider.stage}
+
+package:
+  artifact: target/swagger-lambda-1.0.0.jar
+
+functions:
+  getPet:
+    handler: com.mfalcier.PetGetHandler
+    events:
+      - http:
+          path: pets/{id}
+          method: get
+          documentation:
+            summary: "Get a pet"
+            description: "Get a pet by giving its ID"
+            pathParams:
+              -
+                name: "id"
+                description: "Pet Id"
+                required: "true"
+            methodResponses:
+              -
+                statusCode: "200"
+                responseBody:
+                  description: "Response body description"
+                responseModels:
+                  "application/json": "SimpleResponse"
+              -
+                statusCode: "502"
+                responseBody:
+                  description: "Response body error description"
+                responseModel:
+                  "application/json": "AwsError"
+
+plugins:
+  - serverless-aws-documentation
+
+custom:
+  documentation:
+    info:
+      version: "2"
+      title: "Swagger Lambda"
+      description: "This API is used for test purposes, Swagger related"
+      contact:
+        name: "Example Company"
+        email: "info@email.com"
+    resources:
+      -
+        path: "pets/{id}"
+        description: "This is the description for pets/{id}"
+    models:
+      -
+        name: "AwsError"
+        description: "an aws internal server error, usually with status code 502 (bad gateway)"
+        contentType: "application/json"
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+          required:
+            - message
+      -
+        name: "SimpleResponse"
+        description: "a simple response message"
+        contentType: "application/json"
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+          required:
+            - message
